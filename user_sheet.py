@@ -267,7 +267,8 @@ def display_calendar_plots(values_requests, values_tokens):
                                 suptitle_kws={'x': 0.5, 'y': 1.0},
                                 figsize=(10, 4),
                                 colorbar=True,
-                                cmap='viridis')
+                                cmap='viridis'
+                                )
         st.pyplot(fig_tokens)
 
 def ts_plot_df(email_list,response_status, path, daily_requests_df):
@@ -518,35 +519,35 @@ def display_usage_pattern(requests_df):
         st.pyplot(violin_plot(requests_df))
 
 def main():
+    st.title(f'User Profile')
     response_status = "ARRAY[200, 301, 302, 400, 401, 403, 404, 429, 500]"
     path = "ARRAY['/timegpt', '/forecast', '/timegpt_multi_series', '/timegpt_multi_series_anomalies', '/timegpt_multi_series_cross_validation', '/timegpt_multi_series_historic', '/timegpt_historic', '/historic_forecast','/forecast_multi_series','/historic_forecast_multi_series','/anomaly_detection_multi_series','/cross_validation_multi_series']"
-    query_user = f" SELECT DISTINCT(email) FROM requests_with_users_info WHERE input_tokens IS NOT NULL"
+    query_user = f"SELECT DISTINCT(email) FROM requests_with_users_info WHERE input_tokens IS NOT NULL"
     user_df = fetch_data_supabase(query=query_user)
-    # user_email_list = ['hwang@lyft.com']
-    user_email_list = user_df.email.to_list()
-    st.title(f'User Profile')
-    # user_email_list = ["hwang@lyft.com", 'scottfree.analytics@scottfreellc.com']
-    email = st.selectbox('Select an email:', user_email_list)
+    user_email_list_org = user_df.email.dropna().to_list()
+    query_sub_user = f""" SELECT DISTINCT(email) FROM metadata_requests_api"""
+    user_sub = fetch_data_ixchel(query=query_sub_user)
+
+    user_email_subset = list(set(user_sub.email.to_list()).intersection(set(user_email_list_org)))
+    default_ix = user_email_subset.index("hwang@lyft.com")
+    email = st.selectbox('Select an email:', options=user_email_subset, index=default_ix)
+    st.write("You selected:", email)
+
     email_list = f"ARRAY['{email}']"
     user_df = fetch_user_data(email_list)
     user_info = extract_user_info(user_df)
     display_user_info(user_info)
-    try:
-        daily_requests_df, requests_df = process_user_requests(email_list)
-        display_usage_info(daily_requests_df)
-
-        tokens_user, plot_df = ts_plot_df(email_list,response_status, path, daily_requests_df)
-        cost_df_plot = cost_plot(tokens_user)
-        display_cost_plots(cost_df_plot)
+    daily_requests_df, requests_df = process_user_requests(email_list)
+    display_usage_info(daily_requests_df)
+    tokens_user, plot_df = ts_plot_df(email_list,response_status, path, daily_requests_df)
+    cost_df_plot = cost_plot(tokens_user)
+    display_cost_plots(cost_df_plot)
     
-        values_requests, values_tokens = calendar_df(email_list,response_status, path)
-        display_calendar_plots(values_requests, values_tokens)
+    values_requests, values_tokens = calendar_df(email_list,response_status, path)
+    display_calendar_plots(values_requests, values_tokens)
 
-        display_ts_plots(plot_df)
-        display_usage_pattern(requests_df)
-    except:
-        print('No data in')
-
+    display_ts_plots(plot_df)
+    display_usage_pattern(requests_df)
 
 
 if __name__ == "__main__":
