@@ -258,8 +258,7 @@ def display_calendar_plots(values_requests, values_tokens):
                                 suptitle_kws={'x': 0.5, 'y': 1.0},
                                 figsize=(10, 4),
                                 colorbar=True,
-                                cmap='Blues',
-                                norm='log')
+                                cmap='viridis')
         st.pyplot(fig_requests)
 
     with col2:  # Second column for Token Usage
@@ -268,8 +267,7 @@ def display_calendar_plots(values_requests, values_tokens):
                                 suptitle_kws={'x': 0.5, 'y': 1.0},
                                 figsize=(10, 4),
                                 colorbar=True,
-                                cmap='Blues',
-                                norm='log')
+                                cmap='viridis')
         st.pyplot(fig_tokens)
 
 def ts_plot_df(email_list,response_status, path, daily_requests_df):
