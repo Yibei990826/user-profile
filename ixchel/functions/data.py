@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import psycopg2
 import datetime
+import streamlit as st
 
 from .pricing import apply_token_costs_to_dataframe
 
@@ -14,10 +15,10 @@ from .pricing import apply_token_costs_to_dataframe
 def fetch_data_ixchel(query, params=None):
     # fetch_data_ixchel(query, params=None): Fetches data from the Ixchel database into a DataFrame based on the SQL query and optional parameters.
 
-    DB_HOST = 'aws-0-us-east-1.pooler.supabase.com'
+    DB_HOST = st.secrets["IXCHEL_URL"]
     DB_NAME = "postgres"
-    DB_USER = 'yibei_ixchel_user.izcrvwzuspcqevjhjlrj'
-    DB_PASSWORD = 'ystZczWiBiviLGMm'
+    DB_USER = st.secrets["IXCHEL_DB_USER"]
+    DB_PASSWORD = st.secrets["IXCHEL_DB_PASSWORD"]
     try:
         # Using 'with' to ensure that the connection is closed automatically
         with psycopg2.connect(
@@ -39,10 +40,10 @@ def fetch_data_ixchel(query, params=None):
 def fetch_data_supabase(query, params=None):
     # fetch_data_supabase(query, params=None): Fetches data from the Supabase database into a DataFrame based on the SQL query and optional parameters.
 
-    DB_HOST = 'aws-0-us-east-1.pooler.supabase.com'
+    DB_HOST = st.secrets["SUPABASE_URL"]
     DB_NAME = "postgres"
-    DB_USER='yibei_dev_portal_user.helnftllsvskaqzkxyyy'
-    DB_PASSWORD = 'h7O/7TK1DnSvcCem'
+    DB_USER= st.secrets["DEV_PORTAL_MAIN_DB_USER"]
+    DB_PASSWORD = st.secrets["DEV_PORTAL_MAIN_DB_PASSWORD"]
     try:
         # Using 'with' to ensure that the connection is closed automatically
         with psycopg2.connect(
