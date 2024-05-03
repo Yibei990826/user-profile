@@ -533,19 +533,21 @@ def main():
     user_df = fetch_user_data(email_list)
     user_info = extract_user_info(user_df)
     display_user_info(user_info)
+    try:
+        daily_requests_df, requests_df = process_user_requests(email_list)
+        display_usage_info(daily_requests_df)
 
-    daily_requests_df, requests_df = process_user_requests(email_list)
-    display_usage_info(daily_requests_df)
+        tokens_user, plot_df = ts_plot_df(email_list,response_status, path, daily_requests_df)
+        cost_df_plot = cost_plot(tokens_user)
+        display_cost_plots(cost_df_plot)
+    
+        values_requests, values_tokens = calendar_df(email_list,response_status, path)
+        display_calendar_plots(values_requests, values_tokens)
 
-    tokens_user, plot_df = ts_plot_df(email_list,response_status, path, daily_requests_df)
-    cost_df_plot = cost_plot(tokens_user)
-    display_cost_plots(cost_df_plot)
-
-    values_requests, values_tokens = calendar_df(email_list,response_status, path)
-    display_calendar_plots(values_requests, values_tokens)
-
-    display_ts_plots(plot_df)
-    display_usage_pattern(requests_df)
+        display_ts_plots(plot_df)
+        display_usage_pattern(requests_df)
+    except:
+        print('No data in')
 
 
 
