@@ -3,3 +3,14 @@ numpy
 pandas
 pydeck
 streamlit
+ipykernel
+itables
+jupyterlab
+markdown
+matplotlib
+openai
+pandas
+plotly
+psycopg2-binary
+seaborn
+qgrid
