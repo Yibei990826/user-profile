@@ -12,10 +12,10 @@ from utilsforecast.preprocessing import fill_gaps
 from ixchel.functions.data import *
 from ixchel.functions.utils import aggregate_data_by_freq
 
-import ipywidgets as widgets
-from ipywidgets.embed import embed_minimal_html
-from ipywidgets import IntSlider
-from IPython.display import display
+# import ipywidgets as widgets
+# from ipywidgets.embed import embed_minimal_html
+# from ipywidgets import IntSlider
+# from IPython.display import display
 
 email = 'hwang@lyft.com'
 i_token = 1
@@ -93,7 +93,9 @@ def display_user_info(user_info):
                         st.markdown(f"**{keys[i+j]}:** {values[i+j]}")
 
 def aggregate_by_freq(df, id_col, time_col, freq, aggregations):
-    assert df[id_col].nunique()==1, 'Only 1 serie is supported'
+    if df[id_col].nunique()!=1:
+        print ('Only 1 series is supported')
+        return pd.DataFrame()
     if df.index.name != time_col:
         aggregated_df = df.set_index(time_col)
     aggregated_df = aggregated_df.resample(freq).agg(aggregations)
@@ -130,7 +132,9 @@ def process_user_requests(email_list):
     requests_df['path_short'] = requests_df['path'].map(path_map)
 
     def aggregate_by_freq(df, id_col, time_col, freq, aggregations):
-        assert df[id_col].nunique()==1, 'Only 1 serie is supported'
+        if df[id_col].nunique()!=1:
+            print ('Only 1 series is supported')
+            return pd.DataFrame()
         if df.index.name != time_col:
             aggregated_df = df.set_index(time_col)
         aggregated_df = aggregated_df.resample(freq).agg(aggregations)
@@ -517,6 +521,36 @@ def display_usage_pattern(requests_df):
         st.pyplot(hist_plot(requests_df,'n_ex_vars','External Variable Counts Per API Call'))
     with col2:
         st.pyplot(violin_plot(requests_df))
+
+# def main():
+#     response_status = "ARRAY[200, 301, 302, 400, 401, 403, 404, 429, 500]"
+#     path = "ARRAY['/timegpt', '/forecast', '/timegpt_multi_series', '/timegpt_multi_series_anomalies', '/timegpt_multi_series_cross_validation', '/timegpt_multi_series_historic', '/timegpt_historic', '/historic_forecast','/forecast_multi_series','/historic_forecast_multi_series','/anomaly_detection_multi_series','/cross_validation_multi_series']"
+#     query_user = f" SELECT DISTINCT(email) FROM requests_with_users_info WHERE input_tokens IS NOT NULL"
+#     user_df = fetch_data_supabase(query=query_user)
+#     # user_email_list = ['hwang@lyft.com']
+#     user_email_list = user_df.email.to_list()
+#     st.title(f'User Profile')
+#     user_email_list = ["hwang@lyft.com", 'scottfree.analytics@scottfreellc.com']
+#     email = st.selectbox('Select an email:', user_email_list)
+#     email_list = f"ARRAY['{email}']"
+#     user_df = fetch_user_data(email_list)
+#     user_info = extract_user_info(user_df)
+#     display_user_info(user_info)
+#     try:
+#         daily_requests_df, requests_df = process_user_requests(email_list)
+#         display_usage_info(daily_requests_df)
+
+#         tokens_user, plot_df = ts_plot_df(email_list,response_status, path, daily_requests_df)
+#         cost_df_plot = cost_plot(tokens_user)
+#         display_cost_plots(cost_df_plot)
+    
+#         values_requests, values_tokens = calendar_df(email_list,response_status, path)
+#         display_calendar_plots(values_requests, values_tokens)
+
+#         display_ts_plots(plot_df)
+#         display_usage_pattern(requests_df)
+#     except:
+#         print('No data in')
 
 def main():
     st.title(f'User Profile')
