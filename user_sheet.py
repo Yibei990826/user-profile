@@ -562,7 +562,7 @@ def main():
     query_sub_user = f""" SELECT DISTINCT(email) FROM metadata_requests_api"""
     user_sub = fetch_data_ixchel(query=query_sub_user)
 
-    user_email_subset = list(set(user_sub.email.to_list()).intersection(set(user_email_list_org)))
+    user_email_subset = sorted(list(set(user_sub.email.to_list()).intersection(set(user_email_list_org))))
     default_ix = user_email_subset.index("hwang@lyft.com")
     email = st.selectbox('Select an email:', options=user_email_subset, index=default_ix)
     st.write("You selected:", email)
