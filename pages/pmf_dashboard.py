@@ -41,7 +41,7 @@ def create_info_box(title, values):
 def plot_pmf_engagement(cohort_df, matrix_actions, freq):
     # Ensure cohort dates are in datetime format
     cohort_df['cohort'] = pd.to_datetime(cohort_df['cohort'])
-    dates = pd.date_range(start="2023-07-01", periods=9, freq='M')
+    dates = pd.date_range(start="2023-07-01", periods=10, freq='M')
     values = range(9)
     date_strings = dates.strftime('%Y-%m-%d').tolist()
     metrics = ['new', 'retained', 'expanded', 'resurrected', 'contracted', 'churned']
@@ -118,7 +118,7 @@ def plot_pmf_retention_adj(cohort_df, retention_pmf_df):
         fig.add_trace(
             go.Scatter(
                 x=retention_df_cohort.month,
-                y=retention_df_cohort.percentage_adjusted,
+                y=retention_df_cohort.percentage,
                 mode='lines+markers',
                 name=str(cohort),
                 line=dict(width=1),
@@ -140,7 +140,7 @@ def display_retention_plot(retention_plot):
     st.plotly_chart(retention_plot)
 
 def avg_line(average_rates):
-    fig, ax = plt.subplots(figsize=(15, 3))  # Create a figure and a set of subplots
+    fig, ax = plt.subplots(figsize=(17, 3))  # Create a figure and a set of subplots
     ax.plot(average_rates.index, average_rates.values, marker='o', linestyle='-', color='#2f5293')
 
     ax.set_xlabel('Month')
@@ -174,7 +174,7 @@ def display_avg_line(avg_line_plot):
 def retention_chart(retention_pmf_df):
     retention_pmf_df['cohort_ym']= retention_pmf_df['cohort'].dt.strftime('%Y-%m')
     n_users = retention_pmf_df.groupby(['cohort'])['count'].max().tolist()
-    melted_df = retention_pmf_df.melt(id_vars=['cohort_ym', 'month'], value_vars=['percentage_adjusted'])
+    melted_df = retention_pmf_df.melt(id_vars=['cohort_ym', 'month'], value_vars=['percentage'])
     pivot_df = melted_df.pivot(index='cohort_ym', columns='month', values='value').fillna('')
     pivot_df.insert(0, 'n_users', n_users)
     pivot_df.iloc[-1,1] = 100
@@ -184,7 +184,7 @@ def retention_chart(retention_pmf_df):
     formatted_values['n_users'] = pivot_df['n_users'].apply(lambda x: f"{int(x)}" if pd.notnull(x) else "")
     
     # Create a larger plot object
-    fig, ax = plt.subplots(figsize=(12, 5))  # Increase the size as needed
+    fig, ax = plt.subplots(figsize=(17, 5))  # Increase the size as needed
     ax.set_axis_off()  # Turn off the axis
     
     # Create a table
@@ -250,7 +250,7 @@ def retention_chart_revenue(df):
     formatted_values = pivot_df.applymap(lambda x: f"{x:.0f}%" if pd.notnull(x) and isinstance(x, (int, float)) else "")
     # formatted_values['n_users'] = pivot_df['n_users'].apply(lambda x: f"{int(x)}" if pd.notnull(x) else "")
     
-    fig, ax = plt.subplots(figsize=(12, 4))
+    fig, ax = plt.subplots(figsize=(17, 4))
     ax.set_axis_off()
     table = ax.table(
         cellText=formatted_values.values,
@@ -349,8 +349,11 @@ def main():
 
     retention_pmf_df['cohort_ym']= retention_pmf_df['cohort'].dt.strftime('%Y-%m')
     n_users = retention_pmf_df.groupby(['cohort'])['count'].max().tolist()
-    melted_df = retention_pmf_df.melt(id_vars=['cohort_ym', 'month'], value_vars=['percentage_adjusted'])
+    melted_df = retention_pmf_df.melt(id_vars=['cohort_ym', 'month'], value_vars=['percentage'])
     pivot_df = melted_df.pivot(index='cohort_ym', columns='month', values='value')
+    # pivot_df.iloc[-1,0] = 100
+    # print(pivot_df)
+
     average_rates = pivot_df.mean(axis=0)
     avg_line_plot = avg_line(average_rates)
     # display_avg_line(avg_line_plot)
@@ -409,8 +412,8 @@ def main():
 
     change_pct_html = color_number(f"{change_pct:.1f}%", change_pct > 0)
     user_change_pct_html = color_number(f"{user_change_pct:.1f}%", user_change_pct > 0)
-    quick_ratio_html = color_number(ratios[-1].round(2), True)
-    quick_ratio_avg_html = color_number(ratios[:-1].mean().round(2), True)
+    quick_ratio_html = color_number(ratios[-1].round(2), ratios[-1]>1.5)
+    quick_ratio_avg_html = color_number(ratios[:-1].mean().round(2), ratios[:-1].mean()> 1.5)
     paying_html = color_number(f"+{add_payment_month}", add_payment_month > 0)
 
     # Using columns to layout boxes
