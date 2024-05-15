@@ -427,3 +427,30 @@ def compute_pmf_retention_weekly(requests_pmf_daily, invited_threshold):
     retention_df = pd.concat([zero_week_data, retention_df], ignore_index=True)
     
     return retention_df, requests_user_weekly, cohort_df
+
+def calc_retention_revenue(requests_tokens_monthly):
+    # Divided users into cohorts and calculate monthly revenue
+    monthly_cost_per_user = requests_tokens_monthly[['email', 'timestamp', 'total_cost']]
+    revenue_cohort = requests_tokens_monthly.groupby(['email'])['timestamp'].min().reset_index()
+    revenue_cohort.columns = ['email', 'cohort']
+    monthly_cost_cohort = monthly_cost_per_user.merge(revenue_cohort, left_on = 'email', right_on = ['email'], how = 'left')
+    monthly_cost_cohort_df = monthly_cost_cohort.groupby(['cohort','timestamp'])['total_cost'].sum().reset_index()
+
+    # Fill gaps within monthly cohort
+    cohorts = monthly_cost_cohort_df.cohort.unique()
+    full_dates = pd.date_range(cohorts.min(), cohorts.max(), freq='MS')
+    index = pd.MultiIndex.from_product([cohorts, full_dates], names = ["cohort", "timestamp"])
+    retention_df = pd.DataFrame(index = index).reset_index()
+    retention_df = retention_df[retention_df['cohort']<=retention_df['timestamp']].reset_index(drop=True)
+    retention_df = retention_df.merge(monthly_cost_cohort_df, on =['cohort','timestamp'], how = 'left').fillna('0')
+    retention_df['month'] = retention_df.timestamp.dt.to_period('M') - retention_df.cohort.dt.to_period('M')
+    retention_df['month'] = retention_df['month'].apply(lambda x: x.n)
+
+    # Calculaye base revenue and monthly revenue retention
+    base_df = retention_df[retention_df['cohort']== retention_df['timestamp']][['cohort','total_cost']]
+    base_df.columns = ['cohort','base_cost']
+    retention_revenue = retention_df.merge(base_df, on ='cohort', how ='left')
+    retention_revenue = retention_revenue[retention_revenue['cohort']>= pd.Timestamp(year=2023, month=9, day=1)]
+    retention_revenue['pct'] = retention_revenue['total_cost']/ retention_revenue['base_cost']*100
+
+    return retention_revenue
