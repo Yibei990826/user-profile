@@ -204,32 +204,35 @@ def display_retention_plot(retention_plot):
 
 def avg_retention(retention_pmf_df):
     retention_pmf_df['cohort_ym'] = retention_pmf_df['cohort'].dt.strftime('%Y-%m')
-    melted_df = retention_pmf_df.melt(id_vars=['cohort_ym', 'month'], value_vars=['percentage_adjusted'])
-    melted_df.iloc[-1, melted_df.columns.get_loc('value')] = 100
+    retention_pmf_df.iloc[-1,retention_pmf_df.columns.get_loc('percentage_adjusted')] = 100
+    retention_pmf_df['weighted_percentage'] = retention_pmf_df['percentage_adjusted'] * retention_pmf_df['count']
+    weights_sum_df = retention_pmf_df.groupby('month')['count'].sum().reset_index()
+    
+    melted_df = retention_pmf_df.melt(id_vars=['cohort_ym', 'month'], value_vars=['weighted_percentage'])
     pivot_df = melted_df.pivot(index='cohort_ym', columns='month', values='value')
-    average_rates = pivot_df.mean(axis=0).reset_index()
-    average_rates.columns = ['month', 'pct']
+    weighted_avg_df = pivot_df.sum(axis=0).reset_index()
+    weighted_avg_df = weighted_avg_df.merge(weights_sum_df, on='month')
+    weighted_avg_df.columns = ['month','weighted_percentage', 'cohort_count']
+    weighted_avg_df['weighted_avg_pct'] = weighted_avg_df['weighted_percentage'] / weighted_avg_df['cohort_count']
+    weighted_avg_df = weighted_avg_df[['month', 'weighted_avg_pct']]
     
     fig = go.Figure()
     layout = dict(
         font=dict(size=10),
-        # title="Average Retention per Cohort",
+        title="Weighted Average Retention per Cohort",
         xaxis=dict(title="Month", showgrid=False, zeroline=False),
         yaxis=dict(title="Percentage", showgrid=True, gridcolor='lightgray', zeroline=False, range=[0, 100]),
         plot_bgcolor='white',
-        # hovermode='x',
-        width=900,  # Specify the width of the figure
-        height=400
     )
 
     fig.add_trace(
         go.Scatter(
-            x=average_rates['month'],
-            y=average_rates['pct'],
+            x=weighted_avg_df['month'],
+            y=weighted_avg_df['weighted_avg_pct'],
             mode='lines+markers+text',
             line=dict(width=1),
             marker=dict(size=4),
-            text=[f"{pct:.1f}%" for pct in average_rates['pct']],
+            text=[f"{pct:.1f}%" for pct in weighted_avg_df['weighted_avg_pct']],
             textposition='bottom center'
         )
     )
